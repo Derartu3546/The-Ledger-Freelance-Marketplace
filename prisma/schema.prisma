@@ -1,0 +1,126 @@
+// Freelance Marketplace — data model
+// Two roles share the User table: CLIENT (posts jobs) and FREELANCER (applies to jobs).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")   // pooled connection — used by the running app
+  directUrl = env("DIRECT_URL")     // direct connection — used only by `prisma migrate`
+}
+
+enum Role {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role
+  bio           String?
+  skills        String[]  @default([])
+  hourlyRate    Int?      // in whole currency units, freelancer only
+  createdAt     DateTime  @default(now())
+
+  jobsPosted    Job[]           @relation("ClientJobs")
+  applications  Application[]
+  reviewsGiven  Review[]        @relation("ReviewAuthor")
+  reviewsReceived Review[]      @relation("ReviewSubject")
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  category    String
+  budgetMin   Int
+  budgetMax   Int
+  status      JobStatus @default(OPEN)
+  client      User      @relation("ClientJobs", fields: [clientId], references: [id])
+  clientId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  applications Application[]
+  reviews      Review[]
+  payment      Payment?
+
+  @@index([status])
+  @@index([category])
+}
+
+model Application {
+  id            String            @id @default(uuid())
+  job           Job               @relation(fields: [jobId], references: [id])
+  jobId         String
+  freelancer    User              @relation(fields: [freelancerId], references: [id])
+  freelancerId  String
+  coverLetter   String
+  proposedRate  Int
+  status        ApplicationStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  payment       Payment?
+
+  // A freelancer may only apply once per job.
+  @@unique([jobId, freelancerId])
+  @@index([status])
+}
+
+// One payment per job — created when the client pays the accepted freelancer.
+// Stripe Checkout runs in TEST MODE: no real money moves, but the full flow
+// (session creation, redirect, webhook confirmation) matches production.
+model Payment {
+  id              String        @id @default(uuid())
+  job             Job           @relation(fields: [jobId], references: [id])
+  jobId           String        @unique
+  application     Application   @relation(fields: [applicationId], references: [id])
+  applicationId   String        @unique
+  amountCents     Int
+  status          PaymentStatus @default(PENDING)
+  stripeSessionId String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  job         Job      @relation(fields: [jobId], references: [id])
+  jobId       String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  authorId    String
+  subject     User     @relation("ReviewSubject", fields: [subjectId], references: [id])
+  subjectId   String
+  rating      Int      // 1-5
+  comment     String
+  createdAt   DateTime @default(now())
+
+  @@unique([jobId, authorId, subjectId])
+}

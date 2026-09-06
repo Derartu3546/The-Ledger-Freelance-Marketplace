@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Bright, colorful palette */
+  --color-bg: #fbfaff;
+  --color-surface: #ffffff;
+  --color-text: #17122b;
+  --color-text-soft: #5c5478;
+  --color-border: #e7e2fa;
+
+  --color-primary: #7c3aed;      /* violet-600 */
+  --color-primary-soft: #ede9fe;
+  --color-accent: #ec4899;       /* pink-500 */
+  --color-accent2: #f97316;      /* orange-500 */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+}
+
+.dark {
+  --color-bg: #0e0b1a;
+  --color-surface: #171227;
+  --color-text: #f5f3ff;
+  --color-text-soft: #b3a9d9;
+  --color-border: #2c2447;
+
+  --color-primary: #a78bfa;
+  --color-primary-soft: #241a3f;
+  --color-accent: #f472b6;
+  --color-accent2: #fb923c;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Gradient text used on the hero + logo wordmark */
+.gradient-text {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent) 60%, var(--color-accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Card used everywhere: jobs, dashboards, applications */
+.app-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.app-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -10px rgba(124, 58, 237, 0.25);
+  border-color: var(--color-primary);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border-radius: 0.75rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 6px 18px -6px rgba(124, 58, 237, 0.5);
+}
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.07);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: var(--color-primary-soft);
+  transform: translateY(-2px);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Blob shapes behind the hero for a colorful, non-generic feel */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  z-index: -1;
+  animation: float 10s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+  50% { transform: translateY(-20px) translateX(15px) scale(1.05); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.6s ease both;
+}
+.fade-in-up-delay-1 { animation-delay: 0.1s; }
+.fade-in-up-delay-2 { animation-delay: 0.2s; }
+.fade-in-up-delay-3 { animation-delay: 0.3s; }
+
+/* Mobile menu slide-down */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mobile-menu {
+  animation: slideDown 0.2s ease both;
+}
