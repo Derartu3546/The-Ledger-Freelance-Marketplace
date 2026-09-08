@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { apiFetch } from "@/lib/apiClient";
 
 type User = {
@@ -9,6 +15,10 @@ type User = {
   email: string;
   role: "CLIENT" | "FREELANCER" | "ADMIN";
 } | null;
+
+type AuthMeResponse = {
+  user: User;
+};
 
 type AuthContextValue = {
   user: User;
@@ -24,13 +34,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
-    const data = await apiFetch("/api/auth/me");
-    setUser(data.user);
-    setLoaded(true);
+    try {
+      const data = await apiFetch<AuthMeResponse>("/api/auth/me");
+      setUser(data.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoaded(true);
+    }
   }, []);
 
   const logout = useCallback(async () => {
-    await apiFetch("/api/auth/me", { method: "DELETE" });
+    await apiFetch("/api/auth/me", {
+      method: "DELETE",
+    });
+
     setUser(null);
   }, []);
 
@@ -47,6 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
   return ctx;
 }

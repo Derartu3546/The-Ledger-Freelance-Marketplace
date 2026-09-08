@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { verifyPassword, signToken } from "@/lib/auth";
+import { verifyPassword,} from "@/lib/password";
+import { signToken } from "@/lib/auth";
 
 const LoginSchema = z.object({
   email: z.string().email(),

@@ -4,28 +4,57 @@ import { useEffect, useState } from "react";
 import JobRow from "@/components/JobRow";
 import { apiFetch } from "@/lib/apiClient";
 
+type Job = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  budgetMin: number;
+  budgetMax: number;
+  createdAt: string;
+  status: string;
+  client: {
+    id: string;
+    name: string;
+  };
+  _count?: {
+    applications: number;
+  };
+};
+
+type JobsResponse = {
+  jobs: Job[];
+};
+
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams();
+
     if (search) params.set("search", search);
     if (category) params.set("category", category);
+
     setLoading(true);
+
     const timeout = setTimeout(() => {
-      apiFetch(`/api/jobs?${params.toString()}`)
+      apiFetch<JobsResponse>(`/api/jobs?${params.toString()}`)
         .then((data) => setJobs(data.jobs))
+        .catch(() => setJobs([]))
         .finally(() => setLoading(false));
-    }, 300); // debounce typing
+    }, 300);
+
     return () => clearTimeout(timeout);
   }, [search, category]);
 
   return (
     <div className="py-12">
-      <h1 className="font-display text-3xl font-bold mb-6 fade-in-up">Open work</h1>
+      <h1 className="font-display text-3xl font-bold mb-6 fade-in-up">
+        Open work
+      </h1>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-8 fade-in-up fade-in-up-delay-1">
         <input
@@ -34,6 +63,7 @@ export default function JobsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
         <select
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 outline-none focus:border-[var(--color-primary)] transition-colors"
           value={category}
@@ -51,7 +81,9 @@ export default function JobsPage() {
       {loading ? (
         <p className="text-[var(--color-text-soft)]">Loading…</p>
       ) : jobs.length === 0 ? (
-        <p className="text-[var(--color-text-soft)]">No open jobs match that search yet.</p>
+        <p className="text-[var(--color-text-soft)]">
+          No open jobs match that search yet.
+        </p>
       ) : (
         <div>
           {jobs.map((job) => (
@@ -62,3 +94,4 @@ export default function JobsPage() {
     </div>
   );
 }
+

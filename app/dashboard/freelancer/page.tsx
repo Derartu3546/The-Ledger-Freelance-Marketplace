@@ -11,31 +11,57 @@ const STATUS_COLOR: Record<string, string> = {
   WITHDRAWN: "text-[var(--color-text-soft)]",
 };
 
+type Application = {
+  id: string;
+  proposedRate: number;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+  job: {
+    id: string;
+    title: string;
+    budgetMin: number;
+    budgetMax: number;
+  };
+};
+
+type ApplicationsResponse = {
+  applications: Application[];
+};
+
 export default function FreelancerDashboard() {
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
   function load() {
     setLoading(true);
-    apiFetch("/api/applications")
+
+    apiFetch<ApplicationsResponse>("/api/applications")
       .then((data) => setApplications(data.applications))
+      .catch(() => setApplications([]))
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function withdraw(id: string) {
-    await apiFetch(`/api/applications/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "WITHDRAWN" }),
-    });
-    load();
+    try {
+      await apiFetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "WITHDRAWN" }),
+      });
+
+      load();
+    } catch {
+      // Keep the current applications if withdrawing fails.
+    }
   }
 
   return (
     <div className="py-12">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-3xl">Your applications</h1>
+
         <Link href="/jobs" className="btn-primary px-4 py-2">
           Browse open work
         </Link>
@@ -44,23 +70,44 @@ export default function FreelancerDashboard() {
       {loading ? (
         <p className="text-[var(--color-text-soft)]">Loading…</p>
       ) : applications.length === 0 ? (
-        <p className="text-[var(--color-text-soft)]">You haven't applied to any jobs yet.</p>
+        <p className="text-[var(--color-text-soft)]">
+          You haven't applied to any jobs yet.
+        </p>
       ) : (
         <div>
-          {applications.map((a) => (
-            <div key={a.id} className="app-card p-5 mb-4 flex items-center justify-between">
+          {applications.map((application) => (
+            <div
+              key={application.id}
+              className="app-card p-5 mb-4 flex items-center justify-between"
+            >
               <div>
-                <Link href={`/jobs/${a.job.id}`} className="font-display text-lg hover:underline">
-                  {a.job.title}
+                <Link
+                  href={`/jobs/${application.job.id}`}
+                  className="font-display text-lg hover:underline"
+                >
+                  {application.job.title}
                 </Link>
+
                 <p className="text-sm text-[var(--color-text-soft)]">
-                  Proposed ${a.proposedRate} · Job budget ${a.job.budgetMin}–${a.job.budgetMax}
+                  Proposed ${application.proposedRate} · Job budget $
+                  {application.job.budgetMin}–${application.job.budgetMax}
                 </p>
               </div>
+
               <div className="text-right">
-                <p className={`text-sm font-medium ${STATUS_COLOR[a.status]}`}>{a.status}</p>
-                {a.status === "PENDING" && (
-                  <button onClick={() => withdraw(a.id)} className="text-xs underline mt-1">
+                <p
+                  className={`text-sm font-medium ${
+                    STATUS_COLOR[application.status]
+                  }`}
+                >
+                  {application.status}
+                </p>
+
+                {application.status === "PENDING" && (
+                  <button
+                    onClick={() => withdraw(application.id)}
+                    className="text-xs underline mt-1"
+                  >
                     Withdraw
                   </button>
                 )}
